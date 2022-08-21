@@ -7,6 +7,8 @@ public class BlockController : MonoBehaviour
     public EBlockDirection BlockDirection;
     private float _directionFactor = 1.0f;
 
+    public bool IsBonusBlock = false;
+
     private Vector3 _previousBlockPosition;
 
     private bool _simulatePhysics = false;
@@ -46,7 +48,7 @@ public class BlockController : MonoBehaviour
     {
         _simulatePhysics = true;
 
-        GetComponentInChildren<Rigidbody>().isKinematic = false;
+        GetComponent<Rigidbody>().isKinematic = false;
 
         Vector3 impulseDir = Vector3.right;
         if (BlockDirection == EBlockDirection.Left)
@@ -56,7 +58,7 @@ public class BlockController : MonoBehaviour
 
         cutSide = cutSide < 0.0f ? -1.0f : 1.0f;
 
-        GetComponentInChildren<Rigidbody>().AddForceAtPosition(impulseDir * (cutSide * 5.0f), transform.position + new Vector3(0.0f, 0.75f, 0.0f), ForceMode.Impulse); ;
+        GetComponent<Rigidbody>().AddForceAtPosition(impulseDir * (cutSide * 5.0f), transform.position + new Vector3(0.0f, 0.75f, 0.0f), ForceMode.Impulse); ;
     }
 
     private void OnTriggerEnter(Collider other)

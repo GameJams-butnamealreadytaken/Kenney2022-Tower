@@ -17,11 +17,11 @@ public class SoundManager : MonoBehaviour
 
     public AudioClip GetFailHitsound()
     {
-        return BlockFailHitSounds[Random.Range(0, BlockFailHitSounds.Count - 1)];
+        return BlockFailHitSounds[Random.Range(0, BlockFailHitSounds.Count)];
     }
 
     public AudioClip GetPerfectHitSound()
     {
-        return BlockPerfectHitSounds[Random.Range(0, BlockPerfectHitSounds.Count - 1)];
+        return BlockPerfectHitSounds[Random.Range(0, BlockPerfectHitSounds.Count)];
     }
 }

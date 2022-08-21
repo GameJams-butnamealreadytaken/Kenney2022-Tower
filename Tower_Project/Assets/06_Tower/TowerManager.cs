@@ -17,6 +17,10 @@ public class TowerManager : MonoBehaviour
     private float _blockYHeight;
     private Vector3 _blockScale = Vector3.one;
 
+    // Bonus
+    public List<GameObject> BonusBlocksBase;
+    public List<GameObject> BonusBlocksSpecial;
+
     // UI
     public TowerUI TowerUI;
 
@@ -64,106 +68,14 @@ public class TowerManager : MonoBehaviour
         {
             _blockStop = false;
 
-            float xDiff = _currentBlock.transform.position.x - _previousBlock.transform.position.x;
-            float zDiff = _currentBlock.transform.position.z - _previousBlock.transform.position.z;
-
-            if (Mathf.Abs(xDiff) >= _currentBlock.transform.localScale.x
-                || Mathf.Abs(zDiff) >= _currentBlock.transform.localScale.z)
+            if (_currentBlock.GetComponent<BlockController>().IsBonusBlock)
             {
-                // Game over, too far
-                OnGameOver();
-                return;
-            }
-
-            Vector3 newPos = _currentBlock.transform.position;
-            Vector3 newScale = _currentBlock.transform.localScale;
-
-            bool perfectHit = true;
-
-            // X axis
-            if (Mathf.Abs(xDiff) <= BlockMatchTolerance)
-            {
-                // Close enough, give it to the player
-                newPos.x = _previousBlock.transform.position.x;
-                xDiff = 0.0f;
+                StopBonusBlock();
             }
             else
             {
-                // In the range, scale the current block
-                newScale.x -= Mathf.Abs(xDiff);
-                newPos.x -= xDiff * 0.5f;
-                perfectHit = false;
+                StopBlock();
             }
-
-            // Z axis
-            if (Mathf.Abs(zDiff) <= BlockMatchTolerance)
-            {
-                // Close enough, give it to the player
-                newPos.z = _previousBlock.transform.position.z;
-                zDiff = 0.0f;
-            }
-            else
-            {
-                // In the range, scale the current block
-                newScale.z -= Mathf.Abs(zDiff);
-                newPos.z -= zDiff * 0.5f;
-                perfectHit = false;
-            }
-
-            _currentBlock.transform.position = newPos;
-            _currentBlock.transform.localScale = newScale;
-
-            // Update next block scale based on new scale of current block
-            _blockScale = newScale;
-
-            if (perfectHit)
-            {
-                OnPerfectHit();
-            }
-            else
-            {
-                OnFailHit();
-
-                // Spawn cut block
-                {
-                    if (xDiff != 0.0f)
-                    { 
-                        if (xDiff > 0.0f)
-                        {
-                            newPos.x += (_currentBlock.transform.localScale.x * 0.5f) + (xDiff * 0.5f);
-                        }
-                        else
-                        {
-                            newPos.x -= (_currentBlock.transform.localScale.x * 0.5f) - (xDiff * 0.5f);
-                        }
-                        newScale.x = _previousBlock.transform.localScale.x - newScale.x;
-                    }
-                    else
-                    {
-                        if (zDiff > 0.0f)
-                        {
-                            newPos.z += (_currentBlock.transform.localScale.z * 0.5f) + (zDiff * 0.5f);
-                        }
-                        else
-                        {
-                            newPos.z -= (_currentBlock.transform.localScale.z * 0.5f) - (zDiff * 0.5f);
-                        }
-                        newScale.z = _previousBlock.transform.localScale.z - newScale.z;
-                    }
-
-                    GameObject cutBlock = Instantiate(BlockPrefab, newPos, Quaternion.identity);
-                    cutBlock.transform.localScale = newScale;
-
-                    cutBlock.GetComponent<BlockController>().BlockDirection = _currentBlock.GetComponent<BlockController>().BlockDirection;
-                    cutBlock.GetComponent<BlockController>().ActivatePhysics(xDiff != 0.0f ? xDiff : zDiff);
-                }
-            }
-
-            _previousBlock = _currentBlock;
-
-            IncrementBlockCount(false);
-
-            SpawnBlock();
         }
         else
         {
@@ -181,10 +93,140 @@ public class TowerManager : MonoBehaviour
         CameraPlayer.transform.position = Vector3.SmoothDamp(CameraPlayer.transform.position, _cameraTargetPos, ref velocity, 0.05f);
     }
 
+    private void StopBlock()
+    {
+        float xDiff = _currentBlock.transform.position.x - _previousBlock.transform.position.x;
+        float zDiff = _currentBlock.transform.position.z - _previousBlock.transform.position.z;
+
+        if (Mathf.Abs(xDiff) >= _currentBlock.transform.localScale.x
+            || Mathf.Abs(zDiff) >= _currentBlock.transform.localScale.z)
+        {
+            // Game over, too far
+            OnGameOver();
+            return;
+        }
+
+        Vector3 newPos = _currentBlock.transform.position;
+        Vector3 newScale = _currentBlock.transform.localScale;
+
+        bool perfectHit = true;
+
+        // X axis
+        if (Mathf.Abs(xDiff) <= BlockMatchTolerance)
+        {
+            // Close enough, give it to the player
+            newPos.x = _previousBlock.transform.position.x;
+            xDiff = 0.0f;
+        }
+        else
+        {
+            // In the range, scale the current block
+            newScale.x -= Mathf.Abs(xDiff);
+            newPos.x -= xDiff * 0.5f;
+            perfectHit = false;
+        }
+
+        // Z axis
+        if (Mathf.Abs(zDiff) <= BlockMatchTolerance)
+        {
+            // Close enough, give it to the player
+            newPos.z = _previousBlock.transform.position.z;
+            zDiff = 0.0f;
+        }
+        else
+        {
+            // In the range, scale the current block
+            newScale.z -= Mathf.Abs(zDiff);
+            newPos.z -= zDiff * 0.5f;
+            perfectHit = false;
+        }
+
+        _currentBlock.transform.position = newPos;
+        _currentBlock.transform.localScale = newScale;
+
+        // Update next block scale based on new scale of current block
+        _blockScale = newScale;
+
+        if (perfectHit)
+        {
+            OnPerfectHit();
+        }
+        else
+        {
+            OnFailHit();
+
+            // Spawn cut block
+            {
+                if (xDiff != 0.0f)
+                {
+                    if (xDiff > 0.0f)
+                    {
+                        newPos.x += (_currentBlock.transform.localScale.x * 0.5f) + (xDiff * 0.5f);
+                    }
+                    else
+                    {
+                        newPos.x -= (_currentBlock.transform.localScale.x * 0.5f) - (xDiff * 0.5f);
+                    }
+                    newScale.x = _previousBlock.transform.localScale.x - newScale.x;
+                }
+                else
+                {
+                    if (zDiff > 0.0f)
+                    {
+                        newPos.z += (_currentBlock.transform.localScale.z * 0.5f) + (zDiff * 0.5f);
+                    }
+                    else
+                    {
+                        newPos.z -= (_currentBlock.transform.localScale.z * 0.5f) - (zDiff * 0.5f);
+                    }
+                    newScale.z = _previousBlock.transform.localScale.z - newScale.z;
+                }
+
+                GameObject cutBlock = Instantiate(BlockPrefab, newPos, Quaternion.identity);
+                cutBlock.transform.localScale = newScale;
+
+                cutBlock.GetComponent<BlockController>().BlockDirection = _currentBlock.GetComponent<BlockController>().BlockDirection;
+                cutBlock.GetComponent<BlockController>().ActivatePhysics(xDiff != 0.0f ? xDiff : zDiff);
+            }
+        }
+
+        _previousBlock = _currentBlock;
+
+        IncrementBlockCount(false);
+
+        if (perfectHit && CanSpawnBonus())
+        {
+            SpawnBonusBlock();
+        }
+        else
+        {
+            SpawnBlock();
+        }
+    }
+
+    private void StopBonusBlock()
+    {
+        float xDiff = _currentBlock.transform.position.x - _previousBlock.transform.position.x;
+        float zDiff = _currentBlock.transform.position.z - _previousBlock.transform.position.z;
+        Vector3 bonusColliderSize = _currentBlock.GetComponent<BoxCollider>().size;
+
+        if (Mathf.Abs(xDiff) < (_previousBlock.transform.localScale.x * 0.5f - bonusColliderSize.x * 0.5f)
+            || Mathf.Abs(zDiff) < _previousBlock.transform.localScale.z * 0.5f - bonusColliderSize.z * 0.5f)
+        {
+            _audioSource.PlayOneShot(SoundManager.Instance.GetPerfectHitSound());
+        }
+        else
+        {
+            _audioSource.PlayOneShot(SoundManager.Instance.GetFailHitsound());
+            _currentBlock.GetComponent<BlockController>().ActivatePhysics(1.0f);
+        }
+
+        SpawnBlock();
+    }
+
     private void OnPerfectHit()
     {
         ++_perfectStrike;
-        Debug.Log("Perfect " + _perfectStrike);
 
         if (_perfectStrike % 3 == 0)
         {
@@ -212,8 +254,6 @@ public class TowerManager : MonoBehaviour
 
     private void OnGameOver()
     {
-        Debug.Log("Game Over");
-
         _isGameOver = true;
 
         OnFailHit();
@@ -234,11 +274,15 @@ public class TowerManager : MonoBehaviour
         // Spawn location
         Vector3 newPosition = _previousBlock.transform.position;
         if (previousDirection == EBlockDirection.Left)
+        {
             newPosition.x -= 10.0f;
+        }
         else
+        {
             newPosition.z += 10.0f;
+        }
         newPosition.y += _blockYHeight;
-        Debug.Log(newPosition);
+
         // Create object
         _currentBlock = Instantiate(BlockPrefab, newPosition, Quaternion.identity);
 
@@ -250,6 +294,75 @@ public class TowerManager : MonoBehaviour
 
         // Update camera height
         _cameraTargetPos = _previousBlock.transform.position + _cameraBaseOffset;
+    }
+
+    private bool CanSpawnBonus()
+    {
+        EBlockDirection previousDirection = _previousBlock.GetComponent<BlockController>().BlockDirection;
+
+        if (previousDirection == EBlockDirection.Left)
+        {
+            if (_blockScale.z < 0.5f)
+                return false;
+        }
+        else
+        {
+            if (_blockScale.x < 0.5f)
+                return false;
+        }
+
+        return true;
+    }
+
+    private void SpawnBonusBlock()
+    {
+        EBlockDirection previousDirection = _previousBlock.GetComponent<BlockController>().BlockDirection;
+
+        // Spawn location, same as previous block
+        Vector3 newPosition = _previousBlock.transform.position;
+        if (previousDirection == EBlockDirection.Left)
+        {
+            newPosition.x += _previousBlock.transform.localScale.x * 0.5f;
+            newPosition.z += 10.0f;
+        }
+        else
+        {
+            newPosition.x -= 10.0f;
+            newPosition.z -= _previousBlock.transform.localScale.z * 0.5f;
+        }
+
+        // Create object
+        GameObject bonusBlock = _perfectStrike % 3 == 0 ? BonusBlocksSpecial[Random.Range(0, BonusBlocksSpecial.Count)] : BonusBlocksBase[Random.Range(0, BonusBlocksBase.Count)];
+        _currentBlock = Instantiate(bonusBlock, newPosition, Quaternion.Euler(0.0f, previousDirection == EBlockDirection.Left ? 180.0f : -90.0f, 0.0f));
+
+        _currentBlock.GetComponent<BlockController>().Initialize(previousDirection, _previousBlock.transform.position);
+
+        // Adjust position and scale if needed
+        Vector3 newScale = _currentBlock.transform.localScale;
+        if (previousDirection == EBlockDirection.Left)
+        {
+            if (_previousBlock.transform.localScale.z < _currentBlock.GetComponent<BoxCollider>().size.z)
+            {
+                newScale.z = _previousBlock.transform.localScale.z / _currentBlock.GetComponent<BoxCollider>().size.z;
+                newScale.x = newScale.z;
+                _currentBlock.transform.localScale = newScale;
+            }
+
+            newPosition.x += newScale.x * (_currentBlock.GetComponent<BoxCollider>().size.x * 0.5f);
+            _currentBlock.transform.position = newPosition;
+        }
+        else
+        {
+            if (_previousBlock.transform.localScale.x < _currentBlock.GetComponent<BoxCollider>().size.z)
+            {
+                newScale.z = _previousBlock.transform.localScale.x / _currentBlock.GetComponent<BoxCollider>().size.z;
+                newScale.x = newScale.z;
+                _currentBlock.transform.localScale = newScale;
+            }
+
+            newPosition.z -= newScale.z * (_currentBlock.GetComponent<BoxCollider>().size.x * 0.5f);
+            _currentBlock.transform.position = newPosition;
+        }
     }
 
     private void IncrementBlockCount(bool reset)

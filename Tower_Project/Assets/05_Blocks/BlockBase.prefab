@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 8538833193462621015}
   - component: {fileID: 7721280315437417569}
   - component: {fileID: 667740042867234623}
-  - component: {fileID: 2984800980330533869}
   m_Layer: 0
   m_Name: BlockMesh
   m_TagString: Untagged
@@ -84,19 +83,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &2984800980330533869
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3646024923429030069}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 0
-  serializedVersion: 2
-  m_Size: {x: 0.99999994, y: 0.62499994, z: 0.99999994}
-  m_Center: {x: 0.49999997, y: 0.31249997, z: 0.49999997}
 --- !u!1 &6331742980830239492
 GameObject:
   m_ObjectHideFlags: 0
@@ -145,6 +131,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   BlockDirection: 0
+  IsBonusBlock: 0
 --- !u!65 &244270448250081529
 BoxCollider:
   m_ObjectHideFlags: 0

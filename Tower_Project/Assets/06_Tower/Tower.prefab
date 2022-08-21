@@ -139,6 +139,11 @@ MonoBehaviour:
   BlockBaseSpeed: 10
   BlockSpeedFactor: 1
   BlockMatchTolerance: 0.3
+  BonusBlocksBase:
+  - {fileID: 2383793912425226670, guid: a9af57a751a8d294591122d63b4c2d4e, type: 3}
+  - {fileID: 2383793912425226670, guid: fef6bceeea6869e478a9832fa9b69947, type: 3}
+  BonusBlocksSpecial:
+  - {fileID: 2383793912425226670, guid: 24630d25a89ee594cb7f377e79c3cd03, type: 3}
   TowerUI: {fileID: 8202474927269599309}
   CameraPlayer: {fileID: 5111031717639743470}
 --- !u!82 &2126225432298845604
