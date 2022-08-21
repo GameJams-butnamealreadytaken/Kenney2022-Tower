@@ -30,6 +30,8 @@ public class GameManager : MonoBehaviour
 {
     public TowerManager Tower;
 
+    public GameObject GameOverUI;
+
     private static GameManager _instance;
     public static GameManager Instance => _instance;
 
@@ -40,7 +42,7 @@ public class GameManager : MonoBehaviour
 
     public void OnGameOver()
     {
-        // TODO afficher UI avec stats (perfect hit, best perfect strike, bonus, etc) + bouton restart
+        GameOverUI.SetActive(true);
     }
 
     public void OnStopBlock()
