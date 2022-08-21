@@ -70,3 +70,6 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /Tower_Project/[Aa]ssets/[Ss]treamingAssets/aa.meta
 /Tower_Project/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+#Build
+/BuildWeb/
