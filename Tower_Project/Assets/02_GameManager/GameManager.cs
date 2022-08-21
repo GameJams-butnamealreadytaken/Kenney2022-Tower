@@ -5,6 +5,8 @@ using UnityEngine;
 /*
  * TODO LIST
  * 
+ * Smooth camera moves
+ * Petite impulse sur le morceau de block cut pour pas qu'il tombe comme tout droit une pierre
  * Gestion game over avec dézoom sur la tour + bouton pour restart
  * FX
  * UI Menu

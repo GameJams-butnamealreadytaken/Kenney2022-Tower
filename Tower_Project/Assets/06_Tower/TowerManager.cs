@@ -17,8 +17,13 @@ public class TowerManager : MonoBehaviour
     private float _blockYHeight;
     private Vector3 _blockScale = Vector3.one;
 
+    // UI
+    public TowerUI TowerUI;
+
     // Camera
     public GameObject CameraPlayer;
+    private Vector3 _cameraBaseOffset;
+    private Vector3 _cameraTargetPos;
 
     // Inputs
     private bool _blockStop = false;
@@ -26,16 +31,21 @@ public class TowerManager : MonoBehaviour
     // Game
     private bool _isGameOver = false;
 
-    // Bonus
+    // Stats
+    private int _blockCount = 0;
     private int _perfectStrike = 0;
     private int _bestPerfectStrike = 0;
 
     private void Start()
     {
+        IncrementBlockCount(true);
+
         _previousBlock = InitialBlock;
         _blockScale = InitialBlock.transform.localScale;
 
-        _blockYHeight = _previousBlock.GetComponent<BoxCollider>().size.y;
+        _blockYHeight = _previousBlock.GetComponentInChildren<BoxCollider>().size.y;
+
+        _cameraBaseOffset = CameraPlayer.transform.localPosition;
 
         SpawnBlock();
     }
@@ -76,12 +86,7 @@ public class TowerManager : MonoBehaviour
             {
                 // In the range, scale the current block
                 newScale.x -= Mathf.Abs(xDiff);
-
-                if (xDiff < 0.0f)
-                {
-                    newPos.x -= xDiff;
-                }
-
+                newPos.x -= xDiff * 0.5f;
                 perfectHit = false;
             }
 
@@ -96,12 +101,7 @@ public class TowerManager : MonoBehaviour
             {
                 // In the range, scale the current block
                 newScale.z -= Mathf.Abs(zDiff);
-
-                if (zDiff < 0.0f)
-                {
-                    newPos.z -= zDiff;
-                }
-
+                newPos.z -= zDiff * 0.5f;
                 perfectHit = false;
             }
 
@@ -120,21 +120,43 @@ public class TowerManager : MonoBehaviour
                 OnFailHit();
 
                 // Spawn cut block
-                newPos.x += xDiff;
-                newPos.z += zDiff;
+                {
+                    if (xDiff != 0.0f)
+                    { 
+                        if (xDiff > 0.0f)
+                        {
+                            newPos.x += (_currentBlock.transform.localScale.x * 0.5f) + (xDiff * 0.5f);
+                        }
+                        else
+                        {
+                            newPos.x -= (_currentBlock.transform.localScale.x * 0.5f) - (xDiff * 0.5f);
+                        }
+                        newScale.x = _previousBlock.transform.localScale.x - newScale.x;
+                    }
+                    else
+                    {
+                        if (zDiff > 0.0f)
+                        {
+                            newPos.z += (_currentBlock.transform.localScale.z * 0.5f) + (zDiff * 0.5f);
+                        }
+                        else
+                        {
+                            newPos.z -= (_currentBlock.transform.localScale.z * 0.5f) - (zDiff * 0.5f);
+                        }
+                        newScale.z = _previousBlock.transform.localScale.z - newScale.z;
+                    }
 
-                GameObject cutBlock = Instantiate(BlockPrefab, newPos, Quaternion.identity);
+                    GameObject cutBlock = Instantiate(BlockPrefab, newPos, Quaternion.identity);
+                    cutBlock.transform.localScale = newScale;
 
-                if (xDiff != 0.0f)
-                    newScale.x = _previousBlock.transform.localScale.x - newScale.x;
-                else
-                    newScale.z = _previousBlock.transform.localScale.z - newScale.z;
-                cutBlock.transform.localScale = newScale;
-
-                cutBlock.GetComponent<Rigidbody>().isKinematic = false;
+                    cutBlock.GetComponent<BlockController>().BlockDirection = _currentBlock.GetComponent<BlockController>().BlockDirection;
+                    cutBlock.GetComponent<BlockController>().ActivatePhysics(xDiff != 0.0f ? xDiff : zDiff);
+                }
             }
 
             _previousBlock = _currentBlock;
+
+            IncrementBlockCount(false);
 
             SpawnBlock();
         }
@@ -148,9 +170,14 @@ public class TowerManager : MonoBehaviour
         }
     }
 
+    private void LateUpdate()
+    {
+        Vector3 velocity = Vector3.zero;
+        CameraPlayer.transform.position = Vector3.SmoothDamp(CameraPlayer.transform.position, _cameraTargetPos, ref velocity, 0.05f);
+    }
+
     private void OnPerfectHit()
     {
-        //TODO handle perfect strike & co
         ++_perfectStrike;
         Debug.Log("Perfect " + _perfectStrike);
 
@@ -159,8 +186,8 @@ public class TowerManager : MonoBehaviour
             BlockSpeedFactor += 0.1f;
 
             Vector3 newScale = _currentBlock.transform.localScale;
-            newScale.x += 0.2f;
-            newScale.z += 0.2f;
+            newScale.x += 0.4f;
+            newScale.z += 0.4f;
             
             _currentBlock.transform.localScale = newScale;
             _blockScale = newScale;
@@ -176,29 +203,33 @@ public class TowerManager : MonoBehaviour
 
     private void OnGameOver()
     {
+        Debug.Log("Game Over");
+
         _isGameOver = true;
 
         OnFailHit();
 
-        //TODO dézoom caméra
-        Debug.Log("Game over");
-        _currentBlock.GetComponent<Rigidbody>().isKinematic = false;
+        _currentBlock.GetComponent<BlockController>().ActivatePhysics(1.0f);
+
+        _cameraTargetPos = CameraPlayer.transform.position;
+        _cameraTargetPos.x += _blockCount * 0.5f;
+        _cameraTargetPos.z -= _blockCount * 0.5f;
 
         GameManager.Instance.OnGameOver();
     }
 
     private void SpawnBlock()
     {
-        EBlockDirection previousDirection = _previousBlock.GetComponent<BlockController>().BlockDireciton;
+        EBlockDirection previousDirection = _previousBlock.GetComponent<BlockController>().BlockDirection;
 
         // Spawn location
         Vector3 newPosition = _previousBlock.transform.position;
         if (previousDirection == EBlockDirection.Left)
-            newPosition.x = -10.0f;
+            newPosition.x -= 10.0f;
         else
-            newPosition.z = 10.0f;
+            newPosition.z += 10.0f;
         newPosition.y += _blockYHeight;
-
+        Debug.Log(newPosition);
         // Create object
         _currentBlock = Instantiate(BlockPrefab, newPosition, Quaternion.identity);
 
@@ -206,16 +237,30 @@ public class TowerManager : MonoBehaviour
         _currentBlock.transform.localScale = _blockScale;
 
         // Set block direction
-        _currentBlock.GetComponent<BlockController>().BlockDireciton = previousDirection == EBlockDirection.Left ? EBlockDirection.Right : EBlockDirection.Left;
+        _currentBlock.GetComponent<BlockController>().Initialize(previousDirection == EBlockDirection.Left ? EBlockDirection.Right : EBlockDirection.Left, _previousBlock.transform.position);
 
         // Update camera height
-        newPosition = CameraPlayer.transform.position;
-        newPosition.y += _blockYHeight;
-        CameraPlayer.transform.position = newPosition;
+        _cameraTargetPos = _previousBlock.transform.position + _cameraBaseOffset;
     }
+
+    private void IncrementBlockCount(bool reset)
+    {
+        if (reset)
+        {
+            _blockCount = 0;
+        }
+        else
+        {
+            ++_blockCount;
+        }
+
+        TowerUI.SetBlockCount(_blockCount);
+    }
+
 
     public void OnBlockStop()
     {
         _blockStop = _currentBlock != null;
     }
+
 }
