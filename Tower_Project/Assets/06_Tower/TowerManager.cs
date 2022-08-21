@@ -36,8 +36,13 @@ public class TowerManager : MonoBehaviour
     private int _perfectStrike = 0;
     private int _bestPerfectStrike = 0;
 
+    // Audio
+    private AudioSource _audioSource;
+
     private void Start()
     {
+        _audioSource = GetComponent<AudioSource>();
+
         IncrementBlockCount(true);
 
         _previousBlock = InitialBlock;
@@ -192,6 +197,8 @@ public class TowerManager : MonoBehaviour
             _currentBlock.transform.localScale = newScale;
             _blockScale = newScale;
         }
+
+        _audioSource.PlayOneShot(SoundManager.Instance.GetPerfectHitSound());
     }
 
     private void OnFailHit()
@@ -199,6 +206,8 @@ public class TowerManager : MonoBehaviour
         _bestPerfectStrike = Mathf.Max(_bestPerfectStrike, _perfectStrike);
         _perfectStrike = 0;
         BlockSpeedFactor = 1.0f;
+
+        _audioSource.PlayOneShot(SoundManager.Instance.GetFailHitsound());
     }
 
     private void OnGameOver()
